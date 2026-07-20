@@ -46,9 +46,16 @@ bridge membership, and a fresh topology snapshot.
 - Both agents reported Ethernet, not wireless, backhaul.
 - Exact SSID checks passed for the intended 2.4, 5, and 6 GHz radio roles.
 - The tested 6 GHz radio reported WPA3-SAE and 320 MHz operation.
+- One controller-to-near-agent wired path measured 904.32 Mbit/s in one
+  direction and 893.84 Mbit/s in the other.
+- A hardware reboot changed the boot identity. Normal and recovery management
+  returned in about 19 seconds, both agents were active with Ethernet backhaul
+  in about 35 seconds, required ports remained in the main bridge at 1000/full,
+  and post-reboot live acceptance passed 19/19.
 
 Human verification needed: reproduce the topology and per-band read-back after
-a clean reboot, then preserve a sanitized transcript.
+a clean reboot, preserve a sanitized transcript, and do not generalize the
+first-path throughput result to the second cascaded path.
 
 ### C. LAN safety lesson
 
@@ -79,21 +86,65 @@ archive extraction from hardware recovery.
 - stack health requires the controller, transport, and agent components;
 - MAC parsing rejects trailing garbage;
 - management reads do not print a session token and perform best-effort logout;
-- per-band SSID validation rejects substring and duplicate-name false positives.
+- per-band SSID validation rejects substring and duplicate-name false positives;
+- r8 restores the OpenWrt hostapd control-client socket permission patch that
+  the reproducible r6 recipe omitted.
 
 Human verification needed: run the unit and fixture tests from a clean checkout
 and report the exact current totals, not remembered totals.
 
-### F. Explicit limitations
+### F. Wireless capability boundary
+
+- 802.11r was disabled on the OpenWrt access point at the checkpoint.
+- A compatible cross-vendor mobility domain and FT security profile were not
+  demonstrated.
+- Mesh-wide MLO is impossible on the unchanged hardware because the OpenWrt
+  access point and Wi-Fi 6 agent do not provide EHT/MLO.
+- The observed OpenWrt client association used WPA2-Personal with PSK-SHA256
+  and 802.11ax, while the farther agent's 6 GHz radio reported WPA3-SAE and
+  320 MHz.
+- A common SSID therefore does not prove a common security, FT, or MLO profile;
+  6 GHz roaming and MLO were not demonstrated.
+- The agent does not expose a 6 GHz radio identifier to the controller. A
+  separate fail-closed compensating guard was live-verified with exact hardware
+  identity, dynamic DHCP discovery, an off-device backup gate, one allowlisted
+  combined write, and `NOOP` checks at 12, 60, and 180 seconds.
+- A second call in the same session exited before evidence collection, vendor
+  API access, or any write. The guard is not a prplMesh core feature.
+
+Human verification needed: retain this hardware and profile boundary unless a
+new configuration and direct client telemetry prove a narrower claim.
+
+### G. r8 source-fix boundary
+
+- r6 was reproducible but failed at runtime because its wireless control
+  library used pristine upstream hostapd control-client sources without
+  OpenWrt's socket permission patch.
+- r8 pins and verifies the upstream source, applies the official OpenWrt
+  `610-hostapd_cli_ujail_permission.patch`, and verifies the patched source.
+- The source compatibility suite passed 9/9 and the APK artifact suite passed
+  11/11; the package contained no replacement system Wi-Fi daemon.
+- r8 was installed and survived a hardware reboot. The changed boot identity,
+  return of both management paths, two active Ethernet agents, bridge and link
+  state, and post-reboot acceptance 19/19 were all checked directly.
+
+Human verification needed: distinguish the diagnosed r6 failure, the r8 source
+fix, the verified single hardware reboot, and still-unproven failure scenarios.
+
+### H. Explicit limitations
 
 - no Wi-Fi Alliance certification claim;
-- no verified 802.11r claim;
-- no verified MLO claim;
+- no verified cross-vendor 802.11r claim;
+- no mesh-wide MLO claim on unchanged hardware;
 - no claim of zero-loss or imperceptible roaming;
 - no per-link gigabit claim for the full cascade;
 - no physical-device restore claim;
-- no successful clean SDK rebuild claim while required feed packages are
-  unavailable.
+- no claim that the vendor-local 6 GHz guard is a prplMesh core feature;
+- no claim that one successful r8 reboot covers every power, reset, cable, or
+  upgrade sequence;
+- the second wired-path throughput test, physical walking-roam test, physical
+  restore, 802.11r/FT validation, and MLO validation remain pending or
+  unsupported by the unchanged hardware.
 
 Human verification needed: retain these limitations unless new direct evidence
 closes each gap.

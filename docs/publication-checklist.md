@@ -52,12 +52,37 @@ repository, blog, issue, merge request, or community post.
 
 - [ ] Distinguish observed state from inferred capability.
 - [ ] State which link, not merely which topology, was measured at 1 Gbit/s.
-- [ ] Do not claim 802.11r, MLO, lossless roaming, certification, or universal
-      vendor interoperability without direct evidence.
+- [ ] Attribute 904.32/893.84 Mbit/s only to the measured first wired path;
+      leave the second path pending until it is tested independently.
+- [ ] State that 802.11r was disabled on the OpenWrt access point and that
+      compatible cross-vendor FT was not demonstrated.
+- [ ] State that mesh-wide MLO is impossible on the unchanged hardware because
+      the OpenWrt access point and Wi-Fi 6 agent do not provide EHT/MLO.
+- [ ] Do not treat a common SSID as proof of a common security, FT, or MLO
+      profile; record the WPA2/PSK-SHA256 versus 6 GHz WPA3-SAE boundary.
+- [ ] State that the agent does not expose a controller-visible 6 GHz radio
+      identifier and describe the live-verified guard as a separate fail-closed
+      compensating control, not a prplMesh core feature.
+- [ ] For the guard, report only sanitized mechanics: exact hardware identity,
+      dynamic DHCP discovery, verified off-device backup, one allowlisted
+      combined write, 12/60/180-second `NOOP`, and same-session early skip
+      before evidence collection, vendor API access, or any write.
+- [ ] Do not claim lossless roaming, certification, or universal vendor
+      interoperability without direct evidence.
 - [ ] Describe isolated archive extraction as an isolated restore test, not a
       physical-device restore.
-- [ ] Mark the clean SDK build as blocked until all feeds and dependencies are
-      available and a fresh build completes.
+- [ ] Explain the r6 runtime regression precisely: pristine upstream hostapd
+      control-client sources omitted OpenWrt's socket permission patch.
+- [ ] Describe r8 as the source correction: pinned input, exact official patch,
+      patched-source verification, offline build, and no replacement system
+      Wi-Fi daemon.
+- [ ] Attribute 9/9 source compatibility, 11/11 artifact QA, and post-reboot
+      19/19 live acceptance to r8, the installed package.
+- [ ] Record the verified reboot boundary: boot identity changed, management
+      returned in about 19 seconds, both Ethernet agents in about 35 seconds,
+      and required ports remained in the main bridge at 1000/full.
+- [ ] Do not generalize one successful hardware reboot to every power, reset,
+      cable, upgrade, or recovery sequence.
 - [ ] Separate non-disruptive automated checks from manual disruptive tests.
 - [ ] Include evidence date, software versions, and the exact test scope.
 
@@ -68,7 +93,15 @@ repository, blog, issue, merge request, or community post.
 - [ ] Publish a minimal, reviewable patch series rather than a modified source
       tree with unknown provenance.
 - [ ] Record toolchain and feed revisions needed for the build.
-- [ ] Build from a clean environment and retain the build log privately.
+- [ ] Pin and verify the upstream hostapd input, apply the reviewed OpenWrt
+      control-socket patch exactly once, and verify the patched source.
+- [ ] Reproduce the package in two clean environments from the same frozen
+      wrapper, without shared build caches, and retain both logs privately.
+- [ ] Compare the complete package files, freshly extracted trees, and critical
+      payload hashes; do not infer reproducibility from matching versions.
+- [ ] Verify the repository-index signature with the matching public release
+      key; do not mistake an unsigned individual APK in the APK v3 workflow for
+      a failed signed-index trust check.
 - [ ] Re-run unit, target-syntax, packaging, and non-disruptive live acceptance
       tests against the candidate publication commit.
 
