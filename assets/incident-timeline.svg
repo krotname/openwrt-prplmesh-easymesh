@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Путь от опасного эксперимента к воспроизводимому развёртыванию</title>
+  <desc id="desc">Временная шкала пяти ключевых уроков: изоляция общего физического порта, гонка отката, точная проверка SSID по диапазону, метаданные владельца и полностью зелёный набор тестов.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#EFF6FF"/>
+    </linearGradient>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="0.6" stop-color="#172554"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+    <linearGradient id="timeline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#DC2626"/>
+      <stop offset="0.24" stop-color="#D97706"/>
+      <stop offset="0.5" stop-color="#2563EB"/>
+      <stop offset="0.76" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#15803D"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#0F172A" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1,1 L13,7 L1,13 Z" fill="#15803D"/>
+    </marker>
+    <style>
+      .font { font-family: Inter, "Segoe UI", Arial, sans-serif; }
+      .caps { font-family: Inter, "Segoe UI", Arial, sans-serif; font-weight: 760; letter-spacing: 2px; }
+      .card-title { font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 22px; font-weight: 780; fill: #172033; }
+      .card-copy { font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 16.5px; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1600" height="154" fill="url(#header)"/>
+  <circle cx="1500" cy="10" r="185" fill="#A78BFA" opacity="0.12"/>
+  <circle cx="1450" cy="105" r="100" fill="#38BDF8" opacity="0.10"/>
+  <text x="76" y="58" class="caps" font-size="17" fill="#A5B4FC">РАЗБОР ИНЦИДЕНТОВ</text>
+  <text x="76" y="110" class="font" font-size="42" font-weight="780" fill="#FFFFFF">Пять уроков безопасного mesh-развёртывания</text>
+  <text x="1518" y="92" text-anchor="end" class="font" font-size="18" fill="#DCE7FF">От опыта → к воспроизводимости</text>
+
+  <!-- Stage labels -->
+  <rect x="76" y="178" width="236" height="36" rx="18" fill="#FEE2E2"/>
+  <text x="194" y="202" text-anchor="middle" class="caps" font-size="13" fill="#991B1B">РИСК ОБНАРУЖЕН</text>
+  <rect x="682" y="178" width="236" height="36" rx="18" fill="#DBEAFE"/>
+  <text x="800" y="202" text-anchor="middle" class="caps" font-size="13" fill="#1E40AF">МЕТОД УТОЧНЁН</text>
+  <rect x="1288" y="178" width="236" height="36" rx="18" fill="#DCFCE7"/>
+  <text x="1406" y="202" text-anchor="middle" class="caps" font-size="13" fill="#166534">РЕЗУЛЬТАТ ЗАКРЕПЛЁН</text>
+
+  <!-- Timeline -->
+  <line x1="156" y1="460" x2="1418" y2="460" stroke="#DCE5EE" stroke-width="22" stroke-linecap="round"/>
+  <line x1="156" y1="460" x2="1418" y2="460" stroke="url(#timeline)" stroke-width="8" stroke-linecap="round" marker-end="url(#arrow)"/>
+
+  <!-- Connectors -->
+  <line x1="164" y1="424" x2="164" y2="460" stroke="#DC2626" stroke-width="4"/>
+  <line x1="482" y1="460" x2="482" y2="500" stroke="#D97706" stroke-width="4"/>
+  <line x1="800" y1="424" x2="800" y2="460" stroke="#2563EB" stroke-width="4"/>
+  <line x1="1118" y1="460" x2="1118" y2="500" stroke="#7C3AED" stroke-width="4"/>
+  <line x1="1436" y1="424" x2="1436" y2="460" stroke="#15803D" stroke-width="4"/>
+
+  <!-- Timeline nodes -->
+  <g>
+    <circle cx="164" cy="460" r="34" fill="#FFFFFF" stroke="#DC2626" stroke-width="7"/>
+    <text x="164" y="469" text-anchor="middle" class="font" font-size="25" font-weight="850" fill="#B91C1C">1</text>
+    <circle cx="482" cy="460" r="34" fill="#FFFFFF" stroke="#D97706" stroke-width="7"/>
+    <text x="482" y="469" text-anchor="middle" class="font" font-size="25" font-weight="850" fill="#B45309">2</text>
+    <circle cx="800" cy="460" r="34" fill="#FFFFFF" stroke="#2563EB" stroke-width="7"/>
+    <text x="800" y="469" text-anchor="middle" class="font" font-size="25" font-weight="850" fill="#1D4ED8">3</text>
+    <circle cx="1118" cy="460" r="34" fill="#FFFFFF" stroke="#7C3AED" stroke-width="7"/>
+    <text x="1118" y="469" text-anchor="middle" class="font" font-size="25" font-weight="850" fill="#6D28D9">4</text>
+    <circle cx="1436" cy="460" r="34" fill="#FFFFFF" stroke="#15803D" stroke-width="7"/>
+    <path d="M1422 460 L1432 470 L1451 448" fill="none" stroke="#15803D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Card 1 top -->
+  <g filter="url(#shadow)">
+    <rect x="58" y="246" width="280" height="178" rx="24" fill="#FFFFFF" stroke="#FCA5A5" stroke-width="2"/>
+  </g>
+  <rect x="58" y="246" width="280" height="9" rx="5" fill="#DC2626"/>
+  <circle cx="97" cy="291" r="22" fill="#FEE2E2"/>
+  <path d="M97 277 L113 306 H81 Z" fill="none" stroke="#B91C1C" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M97 287 V297 M97 302 V303" stroke="#B91C1C" stroke-width="3" stroke-linecap="round"/>
+  <text x="130" y="286" class="card-title">Общий порт</text>
+  <text x="130" y="313" class="card-title">изолирован целиком</text>
+  <text x="82" y="348" class="card-copy">Критичные LAN-сервисы</text>
+  <text x="82" y="373" class="card-copy">потеряли связь вместе с</text>
+  <text x="82" y="398" class="card-copy">целевым mesh-агентом.</text>
+
+  <!-- Card 2 bottom -->
+  <g filter="url(#shadow)">
+    <rect x="360" y="500" width="280" height="202" rx="24" fill="#FFFFFF" stroke="#FCD38D" stroke-width="2"/>
+  </g>
+  <rect x="360" y="693" width="280" height="9" rx="5" fill="#D97706"/>
+  <circle cx="399" cy="547" r="22" fill="#FEF3C7"/>
+  <path d="M387 547 A12 12 0 1 1 401 559 M387 547 L387 537 M387 547 H397" fill="none" stroke="#B45309" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="432" y="542" class="card-title">Гонка отката</text>
+  <text x="384" y="584" class="card-copy">Старый таймер отменил</text>
+  <text x="384" y="609" class="card-copy">новую конфигурацию.</text>
+  <rect x="384" y="631" width="232" height="44" rx="14" fill="#FFF7ED"/>
+  <text x="500" y="650" text-anchor="middle" class="font" font-size="14.5" font-weight="700" fill="#9A3412">Решение: гасить stale job</text>
+  <text x="500" y="669" text-anchor="middle" class="font" font-size="14.5" font-weight="700" fill="#9A3412">перед новой попыткой</text>
+
+  <!-- Card 3 top -->
+  <g filter="url(#shadow)">
+    <rect x="660" y="246" width="280" height="178" rx="24" fill="#FFFFFF" stroke="#93C5FD" stroke-width="2"/>
+  </g>
+  <rect x="660" y="246" width="280" height="9" rx="5" fill="#2563EB"/>
+  <circle cx="699" cy="291" r="22" fill="#DBEAFE"/>
+  <path d="M686 296 Q699 276 712 296 M692 302 Q699 291 706 302" fill="none" stroke="#1D4ED8" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="732" y="286" class="card-title">SSID по диапазону</text>
+  <text x="684" y="348" class="card-copy">Имя сети совпадает,</text>
+  <text x="684" y="373" class="card-copy">но проверка привязана к</text>
+  <text x="684" y="398" class="card-copy">2,4 / 5 / 6 ГГц и радио.</text>
+
+  <!-- Card 4 bottom -->
+  <g filter="url(#shadow)">
+    <rect x="962" y="500" width="312" height="202" rx="24" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="2"/>
+  </g>
+  <rect x="962" y="693" width="312" height="9" rx="5" fill="#7C3AED"/>
+  <circle cx="1001" cy="547" r="22" fill="#EDE9FE"/>
+  <circle cx="1001" cy="541" r="7" fill="none" stroke="#6D28D9" stroke-width="3"/>
+  <path d="M989 561 Q1001 550 1013 561" fill="none" stroke="#6D28D9" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="1034" y="542" class="card-title">Метаданные владельца</text>
+  <text x="986" y="584" class="card-copy">owner · PID · фаза · lease</text>
+  <text x="986" y="609" class="card-copy">делают смену состояния</text>
+  <text x="986" y="634" class="card-copy">наблюдаемой и идемпотентной.</text>
+  <rect x="986" y="650" width="264" height="31" rx="15" fill="#F5F3FF"/>
+  <text x="1118" y="672" text-anchor="middle" class="font" font-size="14.5" font-weight="700" fill="#5B21B6">Один владелец операции и отката</text>
+
+  <!-- Card 5 top -->
+  <g filter="url(#shadow)">
+    <rect x="1310" y="246" width="232" height="178" rx="24" fill="#FFFFFF" stroke="#86C99A" stroke-width="2"/>
+  </g>
+  <rect x="1310" y="246" width="232" height="9" rx="5" fill="#15803D"/>
+  <circle cx="1350" cy="291" r="22" fill="#DCFCE7"/>
+  <path d="M1339 291 L1347 299 L1362 283" fill="none" stroke="#15803D" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1382" y="286" class="card-title">Все тесты</text>
+  <text x="1382" y="313" class="card-title">зелёные</text>
+  <text x="1426" y="363" text-anchor="middle" class="font" font-size="34" font-weight="850" fill="#166534">33 / 33</text>
+  <text x="1426" y="394" text-anchor="middle" class="font" font-size="15.5" font-weight="650" fill="#3F6850">безопасных проверок</text>
+
+  <!-- Lessons footer -->
+  <rect x="58" y="756" width="1484" height="98" rx="28" fill="#172033"/>
+  <text x="94" y="791" class="caps" font-size="14" fill="#93C5FD">ИТОГОВАЯ ФОРМУЛА</text>
+  <text x="94" y="827" class="font" font-size="21" font-weight="740" fill="#FFFFFF">Узкая область изменения</text>
+  <text x="382" y="827" class="font" font-size="24" fill="#64748B">+</text>
+  <text x="418" y="827" class="font" font-size="21" font-weight="740" fill="#FFFFFF">один владелец</text>
+  <text x="604" y="827" class="font" font-size="24" fill="#64748B">+</text>
+  <text x="640" y="827" class="font" font-size="21" font-weight="740" fill="#FFFFFF">точная идентификация радио</text>
+  <text x="974" y="827" class="font" font-size="24" fill="#64748B">+</text>
+  <text x="1010" y="827" class="font" font-size="21" font-weight="740" fill="#FFFFFF">проверенный откат</text>
+  <rect x="1245" y="782" width="263" height="46" rx="23" fill="#166534"/>
+  <text x="1377" y="813" text-anchor="middle" class="font" font-size="20" font-weight="780" fill="#FFFFFF">воспроизводимый mesh</text>
+</svg>

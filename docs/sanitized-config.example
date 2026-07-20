@@ -1,0 +1,87 @@
+# PUBLIC EXAMPLE ONLY. THIS FILE IS DESCRIPTIVE, NOT EXECUTABLE.
+#
+# Addresses are from RFC 5737 TEST-NET-1. MAC addresses are locally
+# administered examples. Replace all placeholders from a private deployment
+# plan; never place a real passphrase in a public file.
+
+deployment:
+  routing_authority: controller
+  dhcp_authority: controller
+  backhaul: ethernet
+  topology: cascaded
+
+controller:
+  management_ipv4: 192.0.2.1/24
+  example_mac: 02:00:00:00:00:01
+  operating_system: OpenWrt
+  mesh_component: prplMesh
+  mesh_version: 6.0.1
+  roles:
+    - router
+    - dhcp-server
+    - mesh-controller
+    - access-point
+  bridge:
+    name: <LAN_BRIDGE>
+    required_port_roles:
+      - management-workstation
+      - wired-backhaul
+      - shared-lan-services
+
+agent_a:
+  management_ipv4: 192.0.2.10/24
+  example_al_mac: 02:00:00:00:10:01
+  example_ethernet_mac: 02:00:00:00:10:02
+  roles:
+    - easymesh-agent
+    - access-point
+  expected_state: active
+  expected_backhaul: ethernet
+  radios:
+    - band: 2.4-ghz
+      ssid: <MESH_SSID>
+    - band: 5-ghz
+      ssid: <MESH_SSID>
+
+agent_b:
+  management_ipv4: 192.0.2.11/24
+  example_al_mac: 02:00:00:00:20:01
+  example_ethernet_mac: 02:00:00:00:20:02
+  roles:
+    - easymesh-agent
+    - access-point
+  expected_state: active
+  expected_backhaul: ethernet
+  radios:
+    - band: 2.4-ghz
+      ssid: <MESH_SSID>
+    - band: 5-ghz
+      ssid: <MESH_SSID>
+    - band: 6-ghz
+      ssid: <MESH_SSID>
+      security: wpa3-sae
+      channel_width_mhz: 320
+
+wireless_profile:
+  ssid: <MESH_SSID>
+  passphrase_source: ${MESH_PSK}
+  country: <ISO_3166_1_ALPHA_2>
+  channel_policy: select-after-local-spectrum-survey
+  features_configured_not_end_to_end_proven:
+    neighbor_reports_802_11k: configured
+    band_steering: configured
+  features_not_claimed:
+    practical_client_roaming: unverified
+    fast_transition_802_11r: unverified
+    multi_link_operation: unverified
+    lossless_roaming: unverified
+
+acceptance:
+  require_all_agents_distinct: true
+  require_all_agents_active: true
+  require_ethernet_backhaul: true
+  require_exact_ssid_match_per_band: true
+  require_shared_ports_in_lan_bridge: true
+  require_critical_lan_services_reachable: true
+  require_backup_archive_hash: true
+  require_isolated_restore_test: true
