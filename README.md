@@ -5,7 +5,7 @@
 ![Three access points connected by a cascaded wired backhaul while ordinary LAN services remain online](assets/hero-wired-easymesh.png)
 
 Status: sanitized technical report, not a ready-to-post forum article
-Evidence checkpoint: 2026-07-20
+Evidence checkpoint: 2026-07-21
 
 ## Abstract
 
@@ -17,9 +17,10 @@ provided a 6 GHz Wi-Fi 7 radio.
 
 At the recorded checkpoint, both agents appeared in the controller topology as
 active Ethernet neighbors, the expected common SSID was visible on the tested
-radios, and unrelated wired LAN services remained reachable. This is useful
-interoperability evidence, but it is not certification and it does not imply
-support for every EasyMesh feature.
+radios, unrelated wired LAN services remained reachable, and one
+controller-to-near-agent wired path carried 904.32 Mbit/s in one direction and
+893.84 Mbit/s in the other. This is useful interoperability evidence, but it is
+not certification and it does not imply support for every EasyMesh feature.
 
 ## Scope and tested architecture
 
@@ -60,15 +61,28 @@ the controller where a standardized operation was unavailable.
 | Topology | Two distinct agents appeared active with Ethernet backhaul | Pass |
 | LAN | Router, both agents, and unrelated wired services remained reachable | Pass |
 | Bridge | Controller-facing and backhaul-facing Ethernet ports remained in the main LAN bridge | Pass |
-| WLAN | The exact expected SSID was reported on 2.4 and 5 GHz radios | Pass |
-| 6 GHz | The farther agent reported the expected SSID, WPA3-SAE, and 320 MHz operation | Pass |
-| Link rate | One directly observed workstation Ethernet link negotiated at 1 Gbit/s | Limited pass |
+| WLAN | The exact expected SSID was reported on 2.4 and 5 GHz radios | Pass with profile limitation |
+| 6 GHz | The farther agent reported the expected SSID, WPA3-SAE, and 320 MHz operation | Pass with profile limitation |
+| First wired path | Controller-to-near-agent test measured 904.32 Mbit/s in one direction and 893.84 Mbit/s in the other | Pass for this path only |
+| Second wired path | Near-agent-to-far-agent throughput has not yet been measured | Pending |
+| 802.11r | Fast transition was disabled on the OpenWrt access point; cross-vendor FT was not demonstrated | Not enabled or proven |
+| MLO | The OpenWrt access point and Wi-Fi 6 agent lack EHT/MLO capability | Impossible mesh-wide on unchanged hardware |
 | Backup | Configuration archive was downloaded, hashed, enumerated, and restored only into an isolated test filesystem | Pass with limitation |
-| Full clean SDK build | Stored SDK feeds were incomplete, so an end-to-end clean package rebuild could not finish | Blocked by fixture |
+| Deployed package | prplMesh 6.0.1-r8 with the source-level hostapd control-socket fix | Pass after install and hardware reboot |
+| r8 source and artifact QA | Hostapd compatibility suite 9/9; APK artifact suite 11/11 | Pass |
+| r8 hardware-reboot persistence | Boot identity changed; SSH listeners on TCP 22 and 2222 returned in about 19 seconds; two Ethernet agents returned in about 35 seconds; `lan2` and `lan3` remained in the main bridge at 1000/full | Pass |
+| Post-reboot live acceptance | Required processes and sockets returned; two agents were active over Ethernet | 19/19 pass |
+| 6 GHz vendor-profile guard | Exact radio identity, dynamic DHCP discovery, backup gate, one allowlisted combined write, 12/60/180-second NOOP checks, and same-session early skip | Live-verified fail-closed compensating control |
+| Walking roam | No physical walking-roam measurement has completed | Pending |
+| Physical restore | No destructive restore onto router hardware has been performed | Pending |
 
-The link-rate observation applies only to the measured workstation link. It is
-not evidence that every link in the cascaded backhaul negotiated at the same
-rate.
+The throughput observation applies only to the first measured path. It is not
+evidence for the second cascaded path or for every Ethernet segment.
+
+An identical SSID does not establish an identical security or roaming profile.
+At this checkpoint, the observed OpenWrt client association used WPA2-Personal,
+PSK-SHA256, and 802.11ax, while the farther agent's 6 GHz radio reported
+WPA3-SAE and 320 MHz. Consequently, 6 GHz roaming, FT, and MLO remain unproven.
 
 ## Safe deployment method
 
@@ -251,21 +265,37 @@ of radio behavior:
 - OpenWrt-target cross-compilation syntax checks for changed production code;
 - isolated filesystem restore checks for configuration backups.
 
-At the final recorded checkpoint, the combined non-mutating fixture and live
-acceptance suite passed 33 of 33 checks with no skips. The constrained vendor
-reader passed 8 of 8 unit tests, and the native prplMesh set passed 9 of 9 test
-binaries after the modified unit was rebuilt from the current source.
+The earlier combined non-mutating fixture and live suite passed 33 of 33 checks
+with no skips. The constrained vendor reader passed 8 of 8 unit tests, and the
+native prplMesh set passed 9 of 9 test binaries after the modified unit was
+rebuilt from the current source.
 
-These results cover two distinct artifacts. Live acceptance applies to the
-deployed package. Some source-hardening changes and their fresh unit/cross
-syntax results were prepared afterward for a future candidate; they were not
-rebuilt into or redeployed over the accepted live package during this work.
-Publication must preserve that boundary instead of presenting later source
-fixes as already deployed.
+The final deployed artifact is r8. Its hostapd control-socket source
+compatibility suite passed 9 of 9 cases and its APK artifact suite passed 11 of
+11. The package passed offline integrity and extraction checks, contained 32
+payload files, and did not replace the system `wpad`, `hostapd`, or
+`wpa_supplicant` binaries. A later hardware reboot changed the boot identity.
+Normal and recovery SSH listeners on TCP 22 and 2222 returned in about 19
+seconds, both proprietary agents returned as active Ethernet neighbors in about
+35 seconds, `lan2` and `lan3` remained in the main LAN bridge at 1000/full, and
+the complete post-reboot live acceptance suite passed 19 of 19 checks.
 
-A fresh full SDK package build was not counted as passing because the retained
-SDK fixture lacked required feed packages. Unit tests and target syntax checks
-reduce risk but do not replace a reproducible package build.
+### Source regression found by the reproducible build
+
+The reproducible r6 build exposed a runtime defect rather than completing the
+deployment. The package built its wireless control library against pristine
+upstream hostapd sources but omitted OpenWrt's control-client socket permission
+patch. The sandboxed hostapd process received `STATUS` requests but could not
+reply to the client-created socket; both fronthaul processes then timed out and
+restarted, leaving the controller topology empty.
+
+r8 fixes the cause in source. The recipe pins the upstream hostapd input,
+verifies it before patching, applies the official OpenWrt
+`610-hostapd_cli_ujail_permission.patch`, and verifies the patched result. The
+patch adjusts the local UNIX control socket mode and ownership so the sandboxed
+daemon can reply. The recipe also uses the SDK's explicit host `mkhash` tool
+instead of relying on an undefined build macro. See the
+[sanitized r8 engineering note](docs/r8-hostapd-control-socket-fix.md).
 
 ## Claims this evidence does not support
 
@@ -273,18 +303,39 @@ Do not infer any of the following from the recorded result:
 
 - Wi-Fi Alliance EasyMesh certification;
 - complete vendor interoperability;
-- 802.11r fast transition;
-- MLO control or multi-link backhaul;
+- 802.11r fast transition: it was disabled on the OpenWrt access point, and a
+  compatible cross-vendor mobility domain and FT security profile were not
+  demonstrated;
+- mesh-wide MLO: the OpenWrt access point and Wi-Fi 6 agent do not provide
+  EHT/MLO, so the unchanged three-device topology cannot offer it;
 - zero-packet-loss or imperceptible client roaming;
 - controller ownership of every vendor-specific 6 GHz setting;
+- native prplMesh enforcement of the vendor-managed 6 GHz profile: the agent
+  does not expose a controller-visible 6 GHz radio identifier, so the verified
+  guard is a separate compensating control rather than a core mesh feature;
 - gigabit negotiation or throughput on every Ethernet segment;
 - successful disaster recovery onto physical hardware;
-- resilience to every reboot, cable, power, or firmware-upgrade sequence.
+- resilience to every reboot, cable, power, or firmware-upgrade sequence; one
+  r8 hardware reboot passed, which is evidence only for that tested sequence.
 
 A physical walking test with packet-loss, association, BSSID, and latency
-telemetry is required before making a practical seamless-roaming claim.
+telemetry is required before making a practical seamless-roaming claim. The
+second wired path also requires its own throughput test; neither result can be
+inferred from the first-path measurement.
 
 ## Reproducibility and source provenance
+
+The final r8 package was built offline from a pinned OpenWrt SDK, immutable
+upstream inputs, and a reviewable source patch. The resulting APK is 4,537,338
+bytes, and its complete artifact identity was verified before installation.
+Artifact identity supports provenance but does not replace source review or
+live testing.
+
+OpenWrt's APK v3 workflow signs the repository index rather than each
+individual package. The individual APK passed offline integrity and extraction
+checks, and freshly generated repository indexes passed trust verification
+with the matching public test key. The private test key is not part of this
+public repository and must not be treated as a production release key.
 
 A publishable package recipe should contain an upstream source URL, immutable
 commit or release tag, hashes where applicable, and a reviewable patch series.
