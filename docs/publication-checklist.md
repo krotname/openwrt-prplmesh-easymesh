@@ -51,9 +51,16 @@ repository, blog, issue, merge request, or community post.
 ## 5. Keep claims within evidence
 
 - [ ] Distinguish observed state from inferred capability.
-- [ ] State which link, not merely which topology, was measured at 1 Gbit/s.
+- [ ] State which link, not merely which topology, was measured at 1 Gbit/s;
+      the current 1000/full observation applies only to the occupied
+      controller-side uplink, not the full cascade.
 - [ ] Attribute 904.32/893.84 Mbit/s only to the measured first wired path;
-      leave the second path pending until it is tested independently.
+      say explicitly that the second path was not tested independently.
+- [ ] Keep the historical hardware-reboot checkpoint separate from the later
+      final controller-restart checkpoint; do not merge their port states.
+- [ ] Report final controller-restart LiveSafe as 19/19 with no skips.
+- [ ] State that walking roam was skipped and not run; do not call seamless
+      roaming proven.
 - [ ] State that 802.11r was disabled on the OpenWrt access point and that
       compatible cross-vendor FT was not demonstrated.
 - [ ] State that mesh-wide MLO is impossible on the unchanged hardware because
@@ -64,9 +71,9 @@ repository, blog, issue, merge request, or community post.
       identifier and describe the live-verified guard as a separate fail-closed
       compensating control, not a prplMesh core feature.
 - [ ] For the guard, report only sanitized mechanics: exact hardware identity,
-      dynamic DHCP discovery, verified off-device backup, one allowlisted
-      combined write, 12/60/180-second `NOOP`, and same-session early skip
-      before evidence collection, vendor API access, or any write.
+      dynamic address discovery, verified off-device backup, one allowlisted
+      combined write that restored the exact expected SSID/security/width, and
+      12/60/180-second `NOOP` checks.
 - [ ] Do not claim lossless roaming, certification, or universal vendor
       interoperability without direct evidence.
 - [ ] Describe isolated archive extraction as an isolated restore test, not a

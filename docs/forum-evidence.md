@@ -48,14 +48,19 @@ bridge membership, and a fresh topology snapshot.
 - The tested 6 GHz radio reported WPA3-SAE and 320 MHz operation.
 - One controller-to-near-agent wired path measured 904.32 Mbit/s in one
   direction and 893.84 Mbit/s in the other.
-- A hardware reboot changed the boot identity. Normal and recovery management
+- At the earlier historical checkpoint, a hardware reboot changed the boot identity. Normal and recovery management
   returned in about 19 seconds, both agents were active with Ethernet backhaul
   in about 35 seconds, required ports remained in the main bridge at 1000/full,
   and post-reboot live acceptance passed 19/19.
+- At the final controller-restart checkpoint, both agents again returned
+  Active/Ethernet behind one occupied controller-side uplink at 1000/full. An
+  unused port remained in the main bridge with no carrier, required LAN
+  services stayed reachable, and LiveSafe r8 passed 19/19 with no skips.
 
 Human verification needed: reproduce the topology and per-band read-back after
-a clean reboot, preserve a sanitized transcript, and do not generalize the
-first-path throughput result to the second cascaded path.
+a clean reboot, preserve a sanitized transcript, and do not mix the historical
+hardware-reboot and later controller-restart checkpoints. Do not generalize
+the first-path throughput or occupied-uplink result to the second cascaded path.
 
 ### C. LAN safety lesson
 
@@ -109,8 +114,9 @@ and report the exact current totals, not remembered totals.
   separate fail-closed compensating guard was live-verified with exact hardware
   identity, dynamic DHCP discovery, an off-device backup gate, one allowlisted
   combined write, and `NOOP` checks at 12, 60, and 180 seconds.
-- A second call in the same session exited before evidence collection, vendor
-  API access, or any write. The guard is not a prplMesh core feature.
+- At the final controller session, the one permitted combined write restored
+  the exact expected SSID, WPA3-SAE, and 320 MHz profile before the 12/60/180
+  checks each returned `NOOP`. The guard is not a prplMesh core feature.
 
 Human verification needed: retain this hardware and profile boundary unless a
 new configuration and direct client telemetry prove a narrower claim.
@@ -142,9 +148,10 @@ fix, the verified single hardware reboot, and still-unproven failure scenarios.
 - no claim that the vendor-local 6 GHz guard is a prplMesh core feature;
 - no claim that one successful r8 reboot covers every power, reset, cable, or
   upgrade sequence;
-- the second wired-path throughput test, physical walking-roam test, physical
-  restore, 802.11r/FT validation, and MLO validation remain pending or
-  unsupported by the unchanged hardware.
+- the second wired-path throughput test was not run;
+- the physical walking-roam test was skipped and not run;
+- physical restore and 802.11r/FT validation remain pending, while mesh-wide
+  MLO remains unsupported on the unchanged hardware.
 
 Human verification needed: retain these limitations unless new direct evidence
 closes each gap.

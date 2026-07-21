@@ -13,9 +13,17 @@ EasyMesh agents were active with Ethernet backhaul in about 35 seconds, `lan2`
 and `lan3` remained in the main LAN bridge at 1000/full, and the complete
 post-reboot read-only live acceptance suite passed 19 of 19 checks.
 
-This result is narrower than a universal recovery or interoperability claim. It
-does not establish the second wired-path throughput, walking roam, 802.11r/FT,
-mesh-wide MLO, or physical-device restore.
+That paragraph is the historical hardware-reboot checkpoint. At a later final
+controller-restart checkpoint, both agents again returned Active/Ethernet
+behind one occupied controller-side uplink negotiated at 1000/full, while an
+unused port remained a main-bridge member with no carrier. LiveSafe r8 passed
+19/19 with no skips. This later result is not another hardware-reboot test and
+does not prove the agent-to-agent segment speed.
+
+This result is narrower than a universal recovery or interoperability claim.
+The second wired-path throughput was not run, and walking roam was skipped and
+not run. It does not establish 802.11r/FT, mesh-wide MLO, or physical-device
+restore.
 
 ## Failure and root cause
 
@@ -75,11 +83,12 @@ verified before installation but is omitted from this narrative evidence note.
 | Initial live stability window | Pass; process identities remained stable |
 | Controlled service restart | Pass |
 | Post-service-restart live acceptance | 19/19 pass; two active Ethernet agents |
-| Hardware reboot with r8 installed | Pass; boot identity changed |
-| Management listeners after reboot | TCP 22 and 2222 returned in about 19 seconds |
-| Agent convergence after reboot | Two active Ethernet agents in about 35 seconds |
-| Required Ethernet ports after reboot | `lan2` and `lan3`, main LAN bridge, 1000/full |
-| Post-reboot live acceptance | 19/19 pass |
+| Historical hardware reboot with r8 installed | Pass; boot identity changed |
+| Historical management listeners after reboot | TCP 22 and 2222 returned in about 19 seconds |
+| Historical agent convergence after reboot | Two active Ethernet agents in about 35 seconds |
+| Historical required Ethernet ports after reboot | `lan2` and `lan3`, main LAN bridge, 1000/full |
+| Historical post-reboot live acceptance | 19/19 pass |
+| Final controller-restart acceptance | Two Active/Ethernet agents; occupied controller-side uplink 1000/full; unused main-bridge port idle/no carrier; LiveSafe 19/19, no skips |
 
 The live package identity, service-restart result, hardware-reboot result, and
 controller topology were checked independently of the local build result. A
@@ -93,7 +102,10 @@ expose a 6 GHz radio identifier in the controller-visible radio inventory.
 Consequently, a standard controller-side check cannot uniquely bind the
 vendor-managed 6 GHz profile to that radio.
 
-A separate fail-closed compensating guard is now live-verified. It:
+A separate fail-closed compensating guard is now live-verified. At the final
+controller session it detected vendor-profile drift, restored the exact
+expected SSID, WPA3-SAE, and 320 MHz profile with one allowlisted combined
+write, and then:
 
 - requires the exact expected radio hardware identity without publishing it;
 - discovers the current management address dynamically from DHCP state;
