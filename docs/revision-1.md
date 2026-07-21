@@ -52,12 +52,10 @@ of replacement Wi-Fi daemons, and every extracted-file hash.
 
 ## Install on the matching target
 
-Download all three assets from the
-[latest GitHub release](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)
-and compare the APK against `SHA256SUMS`. Copy it to the AX6S, then
-install it from its upload directory with `apk --network=no --allow-untrusted
-add ./prplmesh-stock-6.0.1-r1.apk`. Edit `/etc/config/prplmesh`: replace every
-SSID and password placeholder, confirm `br-lan`, `wl0-ap0`, and `wl1-ap0`
-against the local OpenWrt configuration, and only then set `enabled` to `1`,
-commit UCI, enable the init service, and start it. Do not install this binary on
-another architecture or OpenWrt release.
+Follow the full [English installation guide](install-en.md) or
+[Russian installation guide](install-ru.md). They include the exact
+compatibility gate, off-device backup, release SHA-256, configuration mapping,
+controlled first start, acceptance checks and rollback. Do not install the
+release binary on another router, architecture, OpenWrt release or development
+snapshot merely because APK accepts the file; rebuild and test it with the
+matching SDK instead.
