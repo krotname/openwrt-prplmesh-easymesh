@@ -1,0 +1,2 @@
+# Patch payloads preserve the exact upstream/source indentation they apply.
+*.patch whitespace=-blank-at-eol,-space-before-tab

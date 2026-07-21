@@ -86,7 +86,7 @@
   <text x="130" y="313" class="card-title">изолирован целиком</text>
   <text x="82" y="348" class="card-copy">Критичные LAN-сервисы</text>
   <text x="82" y="373" class="card-copy">потеряли связь вместе с</text>
-  <text x="82" y="398" class="card-copy">целевым mesh-агентом.</text>
+  <text x="82" y="398" class="card-copy">целевой точкой Mesh.</text>
 
   <!-- Card 2 bottom -->
   <g filter="url(#shadow)">

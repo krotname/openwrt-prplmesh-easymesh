@@ -61,6 +61,15 @@ agent_b:
       ssid: <MESH_SSID>
       security: wpa3-sae
       channel_width_mhz: 320
+      controller_visible_radio_id: unavailable
+      vendor_profile_guard:
+        status: live_verified_fail_closed_compensating_control
+        identity: exact_radio_hardware_identity
+        discovery: dynamic_dhcp
+        backup_before_write: verified_off_device
+        mutation: one_allowlisted_combined_write
+        convergence_checks_seconds: [12, 60, 180]
+        repeated_same_session: early_skip_before_evidence_api_or_write
 
 wireless_profile:
   ssid: <MESH_SSID>
@@ -72,8 +81,8 @@ wireless_profile:
     band_steering: configured
   features_not_claimed:
     practical_client_roaming: unverified
-    fast_transition_802_11r: unverified
-    multi_link_operation: unverified
+    fast_transition_802_11r: disabled_on_controller_cross_vendor_unverified
+    multi_link_operation: unavailable_mesh_wide_on_unchanged_hardware
     lossless_roaming: unverified
 
 acceptance:
