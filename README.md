@@ -22,6 +22,12 @@ controller-to-near-agent wired path carried 904.32 Mbit/s in one direction and
 893.84 Mbit/s in the other. This is useful interoperability evidence, but it is
 not certification and it does not imply support for every EasyMesh feature.
 
+At the final acceptance checkpoint, both agents returned Active/Ethernet after
+a controller restart. They were downstream of one occupied controller-side LAN
+uplink at 1000/full, while another main-bridge port was intentionally idle with
+no carrier. LiveSafe r8 passed 19/19 with no skips. This link-state observation
+does not establish the speed of the second cascaded segment.
+
 ## Scope and tested architecture
 
 ```text
@@ -60,24 +66,30 @@ the controller where a standardized operation was unavailable.
 | Controller | Controller and IEEE 1905 transport processes stayed running | Pass |
 | Topology | Two distinct agents appeared active with Ethernet backhaul | Pass |
 | LAN | Router, both agents, and unrelated wired services remained reachable | Pass |
-| Bridge | Controller-facing and backhaul-facing Ethernet ports remained in the main LAN bridge | Pass |
+| Current bridge/link state | One occupied controller-side uplink remained in the main LAN bridge at 1000/full; another bridge member was intentionally idle with no carrier | Pass for the occupied uplink only |
 | WLAN | The exact expected SSID was reported on 2.4 and 5 GHz radios | Pass with profile limitation |
 | 6 GHz | The farther agent reported the expected SSID, WPA3-SAE, and 320 MHz operation | Pass with profile limitation |
 | First wired path | Controller-to-near-agent test measured 904.32 Mbit/s in one direction and 893.84 Mbit/s in the other | Pass for this path only |
-| Second wired path | Near-agent-to-far-agent throughput has not yet been measured | Pending |
+| Second wired path | Near-agent-to-far-agent throughput was not measured | Not run |
 | 802.11r | Fast transition was disabled on the OpenWrt access point; cross-vendor FT was not demonstrated | Not enabled or proven |
 | MLO | The OpenWrt access point and Wi-Fi 6 agent lack EHT/MLO capability | Impossible mesh-wide on unchanged hardware |
 | Backup | Configuration archive was downloaded, hashed, enumerated, and restored only into an isolated test filesystem | Pass with limitation |
 | Deployed package | prplMesh 6.0.1-r8 with the source-level hostapd control-socket fix | Pass after install and hardware reboot |
 | r8 source and artifact QA | Hostapd compatibility suite 9/9; APK artifact suite 11/11 | Pass |
-| r8 hardware-reboot persistence | Boot identity changed; SSH listeners on TCP 22 and 2222 returned in about 19 seconds; two Ethernet agents returned in about 35 seconds; `lan2` and `lan3` remained in the main bridge at 1000/full | Pass |
-| Post-reboot live acceptance | Required processes and sockets returned; two agents were active over Ethernet | 19/19 pass |
-| 6 GHz vendor-profile guard | Exact radio identity, dynamic DHCP discovery, backup gate, one allowlisted combined write, 12/60/180-second NOOP checks, and same-session early skip | Live-verified fail-closed compensating control |
-| Walking roam | No physical walking-roam measurement has completed | Pending |
+| Historical r8 hardware-reboot persistence | Boot identity changed; SSH listeners on TCP 22 and 2222 returned in about 19 seconds; two Ethernet agents returned in about 35 seconds; `lan2` and `lan3` remained in the main bridge at 1000/full | Pass for that earlier sequence |
+| Historical post-hardware-reboot acceptance | Required processes and sockets returned; two agents were active over Ethernet | 19/19 pass |
+| Final controller-restart acceptance | Both agents returned Active/Ethernet behind the occupied uplink; required LAN services remained reachable | LiveSafe r8 19/19, no skips |
+| 6 GHz vendor-profile guard | Exact radio identity, dynamic address discovery, backup gate, and one allowlisted combined write restored the exact expected SSID, WPA3-SAE, and 320 MHz; 12/60/180-second checks were NOOP | Live-verified fail-closed compensating control |
+| Walking roam | The physical walking-roam test was skipped and not run | Not run |
 | Physical restore | No destructive restore onto router hardware has been performed | Pending |
 
 The throughput observation applies only to the first measured path. It is not
 evidence for the second cascaded path or for every Ethernet segment.
+
+The hardware-reboot and final controller-restart rows are separate checkpoints.
+The latter proves current convergence after a controller restart; it does not
+retroactively extend the earlier reboot test or prove 1000/full on the
+agent-to-agent segment.
 
 An identical SSID does not establish an identical security or roaming profile.
 At this checkpoint, the observed OpenWrt client association used WPA2-Personal,
@@ -160,7 +172,8 @@ not pass simply because it contains the desired name.
 
 The following checks are suitable for a non-disruptive acceptance harness:
 
-1. management workstation link state and negotiated speed;
+1. active intended management path, either negotiated Ethernet or the exact
+   intended WLAN;
 2. controller, both agents, and critical LAN endpoints reachable;
 3. expected OpenWrt model, release, and prplMesh package present;
 4. controller, agent, transport, and fronthaul processes healthy;
@@ -274,11 +287,19 @@ The final deployed artifact is r8. Its hostapd control-socket source
 compatibility suite passed 9 of 9 cases and its APK artifact suite passed 11 of
 11. The package passed offline integrity and extraction checks, contained 32
 payload files, and did not replace the system `wpad`, `hostapd`, or
-`wpa_supplicant` binaries. A later hardware reboot changed the boot identity.
+`wpa_supplicant` binaries. At the earlier hardware-reboot checkpoint, the
+reboot changed the boot identity.
 Normal and recovery SSH listeners on TCP 22 and 2222 returned in about 19
 seconds, both proprietary agents returned as active Ethernet neighbors in about
 35 seconds, `lan2` and `lan3` remained in the main LAN bridge at 1000/full, and
 the complete post-reboot live acceptance suite passed 19 of 19 checks.
+
+At the later final controller-restart checkpoint, one occupied controller-side
+LAN uplink remained in the main bridge at 1000/full, another bridge member was
+idle with no carrier, both agents returned as active Ethernet neighbors, and
+LiveSafe r8 passed 19 of 19 checks with no skips. This is current topology
+evidence, not a second hardware-reboot test and not a throughput result for the
+agent-to-agent segment.
 
 ### Source regression found by the reproducible build
 
@@ -313,15 +334,18 @@ Do not infer any of the following from the recorded result:
 - native prplMesh enforcement of the vendor-managed 6 GHz profile: the agent
   does not expose a controller-visible 6 GHz radio identifier, so the verified
   guard is a separate compensating control rather than a core mesh feature;
-- gigabit negotiation or throughput on every Ethernet segment;
+- gigabit negotiation or throughput on every Ethernet segment: 1000/full is
+  current evidence only for the occupied controller-side uplink, and the
+  second cascaded path was not throughput-tested;
 - successful disaster recovery onto physical hardware;
 - resilience to every reboot, cable, power, or firmware-upgrade sequence; one
   r8 hardware reboot passed, which is evidence only for that tested sequence.
 
-A physical walking test with packet-loss, association, BSSID, and latency
-telemetry is required before making a practical seamless-roaming claim. The
-second wired path also requires its own throughput test; neither result can be
-inferred from the first-path measurement.
+The physical walking test was skipped and not run. A future test with
+packet-loss, association, BSSID, and latency telemetry is required before
+making a practical seamless-roaming claim. The second wired path was also not
+throughput-tested; neither result can be inferred from the first-path
+measurement.
 
 ## Reproducibility and source provenance
 
