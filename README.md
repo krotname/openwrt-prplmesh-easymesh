@@ -10,7 +10,7 @@ I wanted the useful parts of an expensive mesh kit without paying for three prem
 - **Mercusys MR60X** as the low-cost Wi-Fi 6 coverage node;
 - **Mercusys MR47BE v2** as an affordable route to Wi-Fi 7, a dedicated 6 GHz radio, WPA3-SAE and 320 MHz channels.
 
-The result is a three-node network under one SSID. OpenWrt remains the only router and DHCP server, both Mercusys devices receive their network over Ethernet, and the farthest node provides tri-band Wi-Fi 7. A measured controller-to-MR60X path reached **904.32 Mbit/s** in one direction and **893.84 Mbit/s** in the other.
+The result is a three-node network under one SSID. OpenWrt remains the only router and DHCP server, both Mercusys devices receive their network over Ethernet, and the farthest node provides tri-band Wi-Fi 7. A measured controller-to-MR60X path reached **904.32 Mbit/s** in one direction and **893.84 Mbit/s** in the other; a separate user-run Wi-Fi measurement reached about **900 Mbit/s** on the tested client and topology.
 
 OpenWrt was attractive for more than mesh. The same router also gives my network hot failover between two Internet providers and policy-routed VPN access through PAC rules and several exit nodes. Those are subjects for separate articles; here I keep the focus on building a useful mixed-vendor mesh for little money.
 
@@ -97,16 +97,17 @@ Some 6 GHz settings remain vendor-local in the Mercusys firmware, so a narrow co
 | Two Mercusys nodes in the controller topology | Both active; Ethernet reported for both |
 | MR47BE 6 GHz profile | Shared SSID, WPA3-SAE, 320 MHz |
 | AX6S → MR60X wired path | 904.32 / 893.84 Mbit/s |
+| Separate user-run Wi-Fi measurement | About 900 Mbit/s |
 | Recovery after a hardware restart | 19/19 acceptance checks |
 | Recovery after restarting mesh control | 19/19, no skipped checks |
 
-Almost 900 Mbit/s is close to the practical limit of a Gigabit Ethernet link after protocol overhead. It is a measured result for the first wired segment, not a Wi-Fi 7 client benchmark. The second Ethernet segment has not yet been throughput-tested.
+The 904.32/893.84 Mbit/s result belongs to the first wired segment and is close to the practical limit of Gigabit Ethernet after protocol overhead. The separate Wi-Fi measurement reached about 900 Mbit/s on the tested client and topology; it is not the aggregate BE9300 radio rating. The second Ethernet segment has not yet been throughput-tested.
 
 A separate read-only audit found that the client and the installed OpenWrt stack support 802.11r/FT, but FT is not enabled in the current OpenWrt profile: the association uses a non-FT AKM and the runtime has no mobility domain or FT parameters. The stock Mercusys interfaces did not provide proof of an active FT profile either. I therefore do not claim mesh-wide FT roaming. Closing that gap requires consistent configuration on every node and a walking test that records BSSID, AKM, latency and packet loss. Mesh-wide MLO is not achievable on this hardware: the Xiaomi AX6S and Mercusys MR60X are Wi-Fi 6 devices without EHT/MLO. Only local MLO on the MR47BE with a compatible client remains a separate candidate for measurement.
 
 ## Why this build is interesting
 
-This is not a compromise assembled from leftover routers. Each device was bought for a particular price/performance role: an open Wi-Fi 6 router at the center, an inexpensive Wi-Fi 6 node for coverage, and an affordable Wi-Fi 7 node for 6 GHz and 320 MHz. The result keeps one expandable LAN, nearly fills the tested Gigabit path and automatically reconstructs the two-node topology after service restarts.
+This is not a compromise assembled from leftover routers. Each device was bought for a particular price/performance role: an open Wi-Fi 6 router at the center, an inexpensive Wi-Fi 6 node for coverage, and an affordable Wi-Fi 7 node for 6 GHz and 320 MHz. The result keeps one expandable LAN, nearly fills the tested Gigabit path, reaches about 900 Mbit/s in the separate Wi-Fi measurement and automatically reconstructs the two-node topology after service restarts.
 
 It also keeps control of the network where I want it. OpenWrt can grow with dual-provider failover, policy routing, VPN exits, monitoring and ordinary wired services without forcing every future feature into one vendor's controller.
 
