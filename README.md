@@ -1,6 +1,6 @@
 # Budget Wi-Fi 7 Mesh on OpenWrt: Xiaomi AX6S and Mercusys
 
-**[Русская версия для Хабра](docs/habr-ru.md)** · **[Latest binary release](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)**
+**[Published Russian article on Habr](https://habr.com/ru/articles/1061592/)** · **[Install guide: English](docs/install-en.md) / [Russian](docs/install-ru.md)** · **[Latest binary release](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)**
 
 ![Three access points connected by Ethernet in one expandable LAN](assets/hero-wired-easymesh.png)
 
@@ -16,17 +16,17 @@ OpenWrt was attractive for more than mesh. The same router also gives my network
 
 ## The hardware and the budget
 
-Prices were checked in Russia on 21 July 2026 and are intentionally rounded to the nearest thousand roubles. Marketplace offers, bank discounts and availability change constantly, so the links are evidence of the observed listings rather than a permanent price guarantee.
+Because this build was purchased in Russia, the reproducible source listings below are Russian retailer pages. Prices were checked on 21 July 2026, converted to US dollars at the [Bank of Russia official rate](https://www.cbr.ru/eng/currency_base/dynamics/?UniDbQuery.FromDate=21.07.2026&UniDbQuery.ToDate=21.07.2026&UniDbQuery.VAL_NM_RQ=R01235) of **USD 1 = RUB 78.3159**, and rounded to the nearest USD 5. These figures are a snapshot, not an estimate of availability, import costs or taxes in another country.
 
 | Device | Why I chose it | Approximate price |
 |---|---|---:|
-| **Xiaomi Redmi Router AX6S** | Low-cost Wi-Fi 6 platform with good OpenWrt support | **about ₽5,000**. The exact [Megamarket listing](https://megamarket.ru/catalog/details/wi-fi-router-xiaomi-redmi-ax6s-chernyy-30030330-600012695478/) is currently sold out; [IQMI](https://iq-mi.ru/catalog/gadzhety_ustroystva/routery/3024/) provides a current replacement-cost reference |
-| **Mercusys MR60X** | Inexpensive Wi-Fi 6 coverage and Gigabit Ethernet | **about ₽2,000** on [Ozon](https://www.ozon.ru/product/marshrutizator-besprovodnoy-mercusys-mr60x-chernyy-1687671098/) |
-| **Mercusys MR47BE** | The cheapest option in my selection for tri-band Wi-Fi 7, 6 GHz and 320 MHz | **about ₽10,000** on [Ozon](https://www.ozon.ru/product/besprovodnoy-marshrutizator-mercusys-mr47be-wi-fi-7-802-11be-9214mbit-s-2-4ggts-5ggts-6ggts-3xglan-3521842630/) |
+| **Xiaomi Redmi Router AX6S** | Low-cost Wi-Fi 6 platform with good OpenWrt support | **about USD 65**. The exact [Megamarket listing](https://megamarket.ru/catalog/details/wi-fi-router-xiaomi-redmi-ax6s-chernyy-30030330-600012695478/) is sold out; [IQMI](https://iq-mi.ru/catalog/gadzhety_ustroystva/routery/3024/) provides a replacement-cost reference |
+| **Mercusys MR60X** | Inexpensive Wi-Fi 6 coverage and Gigabit Ethernet | **about USD 25** in the observed [Ozon listing](https://www.ozon.ru/product/marshrutizator-besprovodnoy-mercusys-mr60x-chernyy-1687671098/) |
+| **Mercusys MR47BE** | The lowest-cost option in my survey for tri-band Wi-Fi 7, 6 GHz and 320 MHz | **about USD 130** in the observed [Ozon listing](https://www.ozon.ru/product/besprovodnoy-marshrutizator-mercusys-mr47be-wi-fi-7-802-11be-9214mbit-s-2-4ggts-5ggts-6ggts-3xglan-3521842630/) |
 
-That is roughly **₽17,000 for all three nodes**. The AX6S is no longer a current marketplace model, but it remains the device around which this build was designed. Always confirm the hardware revision with the seller.
+That is roughly **USD 220 for all three nodes at the recorded exchange rate**. The AX6S is no longer a current retail model, but it remains the device around which this build was designed. Always confirm the hardware revision with the seller.
 
-Mercusys specifies the [MR60X](https://www.mercusys.com/ru/product/wifi-router/mr60x/v2.20/) as an AX1500 dual-band device. The [MR47BE v2](https://www.mercusys.com/ru/product/wifi-router/mr47be/v2/) is a BE9300 tri-band model with 6 GHz and 320 MHz support. BE9300 is the aggregate radio class, not a promise of 9.3 Gbit/s to one client.
+Mercusys specifies the [MR60X v2.20](https://www.mercusys.com/en/product/wifi-router/mr60x/v2.20/) as an AX1500 dual-band device. The [MR47BE v2](https://www.mercusys.com/en/product/wifi-router/mr47be/v2/) is a BE9300 tri-band model with 6 GHz and 320 MHz support. BE9300 is the aggregate radio class, not a promise of 9.3 Gbit/s to one client.
 
 ## The topology
 
@@ -68,9 +68,9 @@ The public build recipe therefore does four useful things:
 
 The [build recipe and patches](docs/revision-1.md) are kept next to the [ready-to-install APK and SHA-256 file](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest), so the binary can be checked against the documented inputs rather than treated as an opaque attachment.
 
-## Repeating the build
+## Install or rebuild
 
-The released APK targets **OpenWrt 25.12 on `aarch64_cortex-a53`**, the architecture used by this AX6S build. It is not a universal package for every OpenWrt router. Check `ubus call system board` and `apk --print-arch` first, download the APK and checksum from the latest release, verify SHA-256, copy the file to a temporary directory, then install it offline with `apk --network=no --allow-untrusted add <package-path>`. Replace every demonstration value in `/etc/config/prplmesh`, map the wireless sections and hostapd sockets to the local device, set `prplmesh.config.enabled=1`, and run `/etc/init.d/prplmesh enable && /etc/init.d/prplmesh start`. The release notes contain the exact filename and compatibility boundary.
+The released APK was built and tested for **OpenWrt 25.12.5 on the Xiaomi/Redmi AX6S (`mediatek/mt7622`, `aarch64_cortex-a53`)**. It is not a universal package for every router with the same CPU architecture. The [English](docs/install-en.md) and [Russian](docs/install-ru.md) installation guides cover the compatibility gate, off-device backup, SHA-256 verification, placeholder mapping, controlled startup, acceptance checks, removal and rollback. The reproducible [build recipe](docs/revision-1.md) is the path for another target.
 
 The package ships disabled and its public example contains no private SSID, password, address or hardware identifier. That is intentional: enabling a radio-control service with copied credentials would be a much worse default than requiring five minutes of local configuration.
 
@@ -106,7 +106,7 @@ A separate read-only audit found that the client and the installed OpenWrt stack
 
 ## Why this build is interesting
 
-This is not a compromise assembled from leftover routers. Each device was bought for a particular price/performance role: an open Wi-Fi 6 router at the centre, an inexpensive Wi-Fi 6 node for coverage, and an affordable Wi-Fi 7 node for 6 GHz and 320 MHz. The result keeps one expandable LAN, nearly fills the tested Gigabit path and automatically reconstructs the two-node topology after service restarts.
+This is not a compromise assembled from leftover routers. Each device was bought for a particular price/performance role: an open Wi-Fi 6 router at the center, an inexpensive Wi-Fi 6 node for coverage, and an affordable Wi-Fi 7 node for 6 GHz and 320 MHz. The result keeps one expandable LAN, nearly fills the tested Gigabit path and automatically reconstructs the two-node topology after service restarts.
 
 It also keeps control of the network where I want it. OpenWrt can grow with dual-provider failover, policy routing, VPN exits, monitoring and ordinary wired services without forcing every future feature into one vendor's controller.
 
@@ -118,8 +118,10 @@ I publish deeper engineering notes for developers, architects and team leads in 
 - Website: [krot.name](https://krot.name/)
 - GitHub profile: [github.com/krotname](https://github.com/krotname)
 - This project: [krotname/openwrt-prplmesh-easymesh](https://github.com/krotname/openwrt-prplmesh-easymesh)
+- Published article: [Habr (Russian)](https://habr.com/ru/articles/1061592/)
+- Installation: [English](docs/install-en.md) · [Russian](docs/install-ru.md)
 - Binary release: [latest APK and checksums](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)
 
 ---
 
-Prices and availability were checked on 21 July 2026 and rounded to the nearest thousand roubles. Article structure and illustrations were prepared with generative-AI assistance from the author's logs and measurements; technical claims were checked against the recorded acceptance evidence.
+Prices and availability were checked in Russian retail listings on 21 July 2026, converted at USD 1 = RUB 78.3159 and rounded to the nearest USD 5. Article structure and illustrations were prepared with generative-AI assistance from the author's logs and measurements; technical claims were checked against the recorded acceptance evidence.
