@@ -1,391 +1,125 @@
-# Wired third-party EasyMesh agents with prplMesh on OpenWrt
+# Budget Wi-Fi 7 Mesh on OpenWrt: Xiaomi AX6S and Mercusys
 
-**[Русская версия для Хабра](docs/habr-ru.md)** · **[Publication checklist](docs/publication-checklist.md)**
+**[Русская версия для Хабра](docs/habr-ru.md)** · **[Latest binary release](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)**
 
-![Three access points connected by a cascaded wired backhaul while ordinary LAN services remain online](assets/hero-wired-easymesh.png)
+![Three access points connected by Ethernet in one expandable LAN](assets/hero-wired-easymesh.png)
 
-Status: sanitized technical report, not a ready-to-post forum article
-Evidence checkpoint: 2026-07-21
+I wanted the useful parts of an expensive mesh kit without paying for three premium boxes or replacing an open router with a closed controller. So I selected the least expensive device I could find for each job:
 
-## Abstract
+- **Xiaomi Redmi Router AX6S** as an inexpensive, well-supported Wi-Fi 6 platform bought specifically for OpenWrt;
+- **Mercusys MR60X** as the low-cost Wi-Fi 6 coverage node;
+- **Mercusys MR47BE v2** as an affordable route to Wi-Fi 7, a dedicated 6 GHz radio, WPA3-SAE and 320 MHz channels.
 
-This experiment tested whether an OpenWrt router could remain the only router,
-DHCP server, and default gateway while also running prplMesh 6.0.1 as the mesh
-controller and a local access point. Two proprietary EasyMesh devices were
-attached as agents over a cascaded Ethernet backhaul; the farther agent also
-provided a 6 GHz Wi-Fi 7 radio.
+The result is a three-node network under one SSID. OpenWrt remains the only router and DHCP server, both Mercusys devices receive their network over Ethernet, and the farthest node provides tri-band Wi-Fi 7. A measured controller-to-MR60X path reached **904.32 Mbit/s** in one direction and **893.84 Mbit/s** in the other.
 
-At the recorded checkpoint, both agents appeared in the controller topology as
-active Ethernet neighbors, the expected common SSID was visible on the tested
-radios, unrelated wired LAN services remained reachable, and one
-controller-to-near-agent wired path carried 904.32 Mbit/s in one direction and
-893.84 Mbit/s in the other. This is useful interoperability evidence, but it is
-not certification and it does not imply support for every EasyMesh feature.
+OpenWrt was attractive for more than mesh. The same router also gives my network hot failover between two Internet providers and policy-routed VPN access through PAC rules and several exit nodes. Those are subjects for separate articles; here I keep the focus on building a useful mixed-vendor mesh for little money.
 
-At the final acceptance checkpoint, both agents returned Active/Ethernet after
-a controller restart. They were downstream of one occupied controller-side LAN
-uplink at 1000/full, while another main-bridge port was intentionally idle with
-no carrier. LiveSafe r8 passed 19/19 with no skips. This link-state observation
-does not establish the speed of the second cascaded segment.
+## The hardware and the budget
 
-## Scope and tested architecture
+Prices were checked in Russia on 21 July 2026 and are intentionally rounded to the nearest thousand roubles. Marketplace offers, bank discounts and availability change constantly, so the links are evidence of the observed listings rather than a permanent price guarantee.
+
+| Device | Why I chose it | Approximate price |
+|---|---|---:|
+| **Xiaomi Redmi Router AX6S** | Low-cost Wi-Fi 6 platform with good OpenWrt support | **about ₽5,000**. The exact [Megamarket listing](https://megamarket.ru/catalog/details/wi-fi-router-xiaomi-redmi-ax6s-chernyy-30030330-600012695478/) is currently sold out; [IQMI](https://iq-mi.ru/catalog/gadzhety_ustroystva/routery/3024/) provides a current replacement-cost reference |
+| **Mercusys MR60X** | Inexpensive Wi-Fi 6 coverage and Gigabit Ethernet | **about ₽2,000** on [Ozon](https://www.ozon.ru/product/marshrutizator-besprovodnoy-mercusys-mr60x-chernyy-1687671098/) |
+| **Mercusys MR47BE** | The cheapest option in my selection for tri-band Wi-Fi 7, 6 GHz and 320 MHz | **about ₽10,000** on [Ozon](https://www.ozon.ru/product/besprovodnoy-marshrutizator-mercusys-mr47be-wi-fi-7-802-11be-9214mbit-s-2-4ggts-5ggts-6ggts-3xglan-3521842630/) |
+
+That is roughly **₽17,000 for all three nodes**. The AX6S is no longer a current marketplace model, but it remains the device around which this build was designed. Always confirm the hardware revision with the seller.
+
+Mercusys specifies the [MR60X](https://www.mercusys.com/ru/product/wifi-router/mr60x/v2.20/) as an AX1500 dual-band device. The [MR47BE v2](https://www.mercusys.com/ru/product/wifi-router/mr47be/v2/) is a BE9300 tri-band model with 6 GHz and 320 MHz support. BE9300 is the aggregate radio class, not a promise of 9.3 Gbit/s to one client.
+
+## The topology
 
 ```text
-                         routing, NAT, DHCP
-Internet --------------- OpenWrt controller/AP
-                              |
-                         shared LAN bridge
-                              |
-                        Ethernet backhaul
-                              |
-                       EasyMesh agent A
-                              |
-                        Ethernet backhaul
-                              |
-                       EasyMesh agent B
-                       (includes 6 GHz)
+Internet
+   |
+Xiaomi Redmi AX6S
+OpenWrt: routing + DHCP + Wi-Fi + mesh control
+   |
+   | Ethernet
+   v
+Mercusys MR60X: Wi-Fi 6
+   |
+   | Ethernet
+   v
+Mercusys MR47BE: Wi-Fi 7, including 6 GHz
 ```
 
-![Exact topology: OpenWrt controller, two cascaded Ethernet EasyMesh agents, and services sharing the LAN bridge](assets/topology.png)
-
-*The critical boundary is the shared LAN bridge: isolate the mesh protocol path, not the whole physical downstream port.*
-
-The OpenWrt installation retained its normal Linux bridge and UCI network
-model. prplMesh was packaged locally for that environment; a complete prplOS,
-WHM, or Ambiorix platform was not installed. The proprietary agents retained
-their vendor firmware.
-
-The interoperability boundary was therefore IEEE 1905.1/EasyMesh control
-traffic plus Ethernet backhaul. Vendor-specific management remained outside
-the controller where a standardized operation was unavailable.
-
-## What was observed
-
-| Area | Recorded evidence | Result |
-|---|---|---|
-| Controller | Controller and IEEE 1905 transport processes stayed running | Pass |
-| Topology | Two distinct agents appeared active with Ethernet backhaul | Pass |
-| LAN | Router, both agents, and unrelated wired services remained reachable | Pass |
-| Current bridge/link state | One occupied controller-side uplink remained in the main LAN bridge at 1000/full; another bridge member was intentionally idle with no carrier | Pass for the occupied uplink only |
-| WLAN | The exact expected SSID was reported on 2.4 and 5 GHz radios | Pass with profile limitation |
-| 6 GHz | The farther agent reported the expected SSID, WPA3-SAE, and 320 MHz operation | Pass with profile limitation |
-| First wired path | Controller-to-near-agent test measured 904.32 Mbit/s in one direction and 893.84 Mbit/s in the other | Pass for this path only |
-| Second wired path | Near-agent-to-far-agent throughput was not measured | Not run |
-| 802.11r | Fast transition was disabled on the OpenWrt access point; cross-vendor FT was not demonstrated | Not enabled or proven |
-| MLO | The OpenWrt access point and Wi-Fi 6 agent lack EHT/MLO capability | Impossible mesh-wide on unchanged hardware |
-| Backup | Configuration archive was downloaded, hashed, enumerated, and restored only into an isolated test filesystem | Pass with limitation |
-| Deployed package | prplMesh 6.0.1-r8 with the source-level hostapd control-socket fix | Pass after install and hardware reboot |
-| r8 source and artifact QA | Hostapd compatibility suite 9/9; APK artifact suite 11/11 | Pass |
-| Historical r8 hardware-reboot persistence | Boot identity changed; SSH listeners on TCP 22 and 2222 returned in about 19 seconds; two Ethernet agents returned in about 35 seconds; `lan2` and `lan3` remained in the main bridge at 1000/full | Pass for that earlier sequence |
-| Historical post-hardware-reboot acceptance | Required processes and sockets returned; two agents were active over Ethernet | 19/19 pass |
-| Final controller-restart acceptance | Both agents returned Active/Ethernet behind the occupied uplink; required LAN services remained reachable | LiveSafe r8 19/19, no skips |
-| 6 GHz vendor-profile guard | Exact radio identity, dynamic address discovery, backup gate, and one allowlisted combined write restored the exact expected SSID, WPA3-SAE, and 320 MHz; 12/60/180-second checks were NOOP | Live-verified fail-closed compensating control |
-| Walking roam | The physical walking-roam test was skipped and not run | Not run |
-| Physical restore | No destructive restore onto router hardware has been performed | Pending |
-
-The throughput observation applies only to the first measured path. It is not
-evidence for the second cascaded path or for every Ethernet segment.
-
-The hardware-reboot and final controller-restart rows are separate checkpoints.
-The latter proves current convergence after a controller restart; it does not
-retroactively extend the earlier reboot test or prove 1000/full on the
-agent-to-agent segment.
-
-An identical SSID does not establish an identical security or roaming profile.
-At this checkpoint, the observed OpenWrt client association used WPA2-Personal,
-PSK-SHA256, and 802.11ax, while the farther agent's 6 GHz radio reported
-WPA3-SAE and 320 MHz. Consequently, 6 GHz roaming, FT, and MLO remain unproven.
-
-## Safe deployment method
-
-### 1. Capture a baseline
-
-Before changing mesh state, record:
-
-- OpenWrt release, kernel, hardware model, and installed prplMesh package;
-- bridge membership and interface link state;
-- DHCP leases and current agent addresses;
-- controller and transport process state;
-- reachability of every service sharing the physical backhaul port;
-- existing wireless SSIDs and security modes.
-
-Treat dynamically leased addresses as observations, not stable identity. Match
-agents by controller topology identity and Ethernet adjacency as well as by
-their current management address.
-
-### 2. Prove the rollback artifact
+![OpenWrt controller and two cascaded Mercusys nodes in one LAN](assets/topology-en.png)
 
-A downloaded archive is not yet a proven backup. At minimum:
+The AX6S is the only gateway and DHCP server. Both Mercusys units are part of the same LAN, so there is no second NAT layer, competing DHCP service or hidden subnet. The controller sees two distinct EasyMesh nodes and reports an Ethernet connection for each one.
 
-1. calculate and retain a cryptographic hash;
-2. enumerate the archive without errors;
-3. reject unexpected owners, paths, or missing critical members;
-4. extract into an isolated filesystem;
-5. compare restored critical files with the source snapshot;
-6. document that a physical-device restore remains untested unless it was
-   actually performed.
+This distinction matters. Giving three access points the same SSID and password can make the client list look tidy, but it does not prove that a controller knows about the nodes or that the wired path is being used. Here the controller topology, the IEEE 1905.1 exchange and the live traffic path agree with one another.
 
-Do not claim a hardware restore from an extraction-only test.
+The Ethernet layout is deliberately expandable. The branch behind the MR60X can also carry computers, servers, switches and future access points. Everything remains in the main OpenWrt bridge, so adding an ordinary wired client does not require renumbering the network or creating another routing domain.
 
-### 3. Preserve the main LAN bridge
+## Making prplMesh fit stock OpenWrt
 
-The physical Ethernet port carrying the mesh backhaul may also carry ordinary
-LAN devices. Moving that entire port into a temporary mesh-only bridge can
-disconnect unrelated systems even when the mesh agents themselves remain
-reachable.
+The AX6S runs OpenWrt 25.12.5 with Linux 6.12.94. I built the first public revision of `prplmesh-stock 6.0.1` around the normal OpenWrt model: UCI remains the configuration layer, Linux bridge owns the LAN, and the existing hostapd/wpad installation keeps control of the radios. Installing a complete prplOS stack was unnecessary.
 
-Before any bridge mutation, enumerate downstream MAC addresses and leases.
-Prefer a narrow test that leaves the shared physical port in the main bridge.
-If isolation is truly required, first provide a separate physical port or a
-deliberately designed VLAN topology.
+The interesting compatibility problem was the hostapd control socket. A plain upstream control client could send a command but could not reliably receive the reply inside OpenWrt's sandbox. The radio-management process then timed out and restarted, leaving the topology empty. The package fixes that at source level by applying the corresponding OpenWrt permission patch to the pinned hostapd control-client source before prplMesh is compiled.
 
-### 4. Keep one routing authority
+The public build recipe therefore does four useful things:
 
-OpenWrt remains the only router and DHCP server. Put proprietary devices into
-their access-point/EasyMesh-agent operating mode so that they do not introduce
-another NAT or DHCP domain. Verify this from the LAN, rather than relying only
-on a label in a vendor interface.
+1. pins the prplMesh and hostapd inputs;
+2. verifies the unmodified control-client source before patching;
+3. applies a minimal, reviewable patch series;
+4. verifies that the package does not replace `wpad`, `hostapd` or `wpa_supplicant`.
 
-### 5. Add agents one at a time
+The [build recipe and patches](docs/revision-1.md) are kept next to the [ready-to-install APK and SHA-256 file](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest), so the binary can be checked against the documented inputs rather than treated as an opaque attachment.
 
-For each agent:
+## Repeating the build
 
-1. connect power and the intended Ethernet backhaul;
-2. start the vendor-supported onboarding window;
-3. trigger the controller onboarding action once;
-4. wait for an active Ethernet adjacency;
-5. verify exact SSID and security read-back;
-6. retest all unrelated services before adding the next agent.
+The released APK targets **OpenWrt 25.12 on `aarch64_cortex-a53`**, the architecture used by this AX6S build. It is not a universal package for every OpenWrt router. Check `ubus call system board` and `apk --print-arch` first, download the APK and checksum from the latest release, verify SHA-256, copy the file to a temporary directory, then install it offline with `apk --network=no --allow-untrusted add <package-path>`. Replace every demonstration value in `/etc/config/prplmesh`, map the wireless sections and hostapd sockets to the local device, set `prplmesh.config.enabled=1`, and run `/etc/init.d/prplmesh enable && /etc/init.d/prplmesh start`. The release notes contain the exact filename and compatibility boundary.
 
-Repeated button presses or overlapping onboarding windows make the resulting
-state difficult to attribute. A single, bounded attempt followed by read-back
-produces better evidence.
+The package ships disabled and its public example contains no private SSID, password, address or hardware identifier. That is intentional: enabling a radio-control service with copied credentials would be a much worse default than requiring five minutes of local configuration.
 
-### 6. Validate exact radio state
+## Getting 6 GHz right
 
-A collapsed or substring-based wireless check can hide a wrong 6 GHz SSID.
-Validate each band independently and require exact equality. Account for
-localized band labels and verify that an unexpected duplicate or suffix does
-not pass simply because it contains the desired name.
+The MR47BE's 6 GHz radio required a stricter check than simply searching for a familiar network name. Each band is read separately and the full SSID is compared, so a similarly named profile with a suffix cannot be mistaken for the target network.
 
-## Acceptance checks
+The final read-back from the MR47BE confirmed:
 
-The following checks are suitable for a non-disruptive acceptance harness:
+- the expected shared SSID;
+- the 6 GHz band;
+- WPA3-SAE;
+- 320 MHz channel width;
+- the expected MR47BE hardware identity.
 
-1. active intended management path, either negotiated Ethernet or the exact
-   intended WLAN;
-2. controller, both agents, and critical LAN endpoints reachable;
-3. expected OpenWrt model, release, and prplMesh package present;
-4. controller, agent, transport, and fronthaul processes healthy;
-5. required control sockets listening;
-6. all shared physical ports still members of the main LAN bridge;
-7. no unfinished transition lock or rollback timer active;
-8. expected SSID present exactly once per intended radio role;
-9. two distinct agents active with Ethernet backhaul;
-10. current backup manifest, archive hash, restore-test result, and scheduled
-    backup job healthy.
+Some 6 GHz settings remain vendor-local in the Mercusys firmware, so a narrow convergence check watches that exact radio profile. It discovers the device's current management address, validates its identity, compares the complete band settings and touches only the allowlisted fields when drift is detected. After one correction, repeated checks at 12, 60 and 180 seconds required no further change.
 
-Tests that should remain manual or explicitly disruptive include walking roam
-measurements, cable removal, power interruption, factory reset, firmware
-upgrade, and a restore onto physical hardware.
+## What was actually measured
 
-## Regression cases that found real defects
+![Evidence from configuration through topology to real connectivity](assets/evidence-stack-en.png)
 
-![Five lessons from failures to a reproducible deployment](assets/incident-timeline.png)
+| Check | Observed result |
+|---|---|
+| Two Mercusys nodes in the controller topology | Both active; Ethernet reported for both |
+| MR47BE 6 GHz profile | Shared SSID, WPA3-SAE, 320 MHz |
+| AX6S → MR60X wired path | 904.32 / 893.84 Mbit/s |
+| Recovery after a hardware restart | 19/19 acceptance checks |
+| Recovery after restarting mesh control | 19/19, no skipped checks |
 
-### Shared-port isolation
+Almost 900 Mbit/s is close to the practical limit of a Gigabit Ethernet link after protocol overhead. It is a measured result for the first wired segment, not a Wi-Fi 7 client benchmark. The second Ethernet segment has not yet been throughput-tested.
 
-**Failure:** a temporary bridge moved the complete downstream Ethernet port out
-of the LAN bridge. Unrelated services behind that port disappeared.
+A separate read-only audit found that the client and the installed OpenWrt stack support 802.11r/FT, but FT is not enabled in the current OpenWrt profile: the association uses a non-FT AKM and the runtime has no mobility domain or FT parameters. The stock Mercusys interfaces did not provide proof of an active FT profile either. I therefore do not claim mesh-wide FT roaming. Closing that gap requires consistent configuration on every node and a walking test that records BSSID, AKM, latency and packet loss. Mesh-wide MLO is not achievable on this hardware: the Xiaomi AX6S and Mercusys MR60X are Wi-Fi 6 devices without EHT/MLO. Only local MLO on the MR47BE with a compatible client remains a separate candidate for measurement.
 
-**Correction:** restore the port to the main bridge and redesign tests around
-the individual mesh protocol path, not the whole shared wire.
+## Why this build is interesting
 
-**Regression:** fail acceptance if any required physical port leaves the main
-bridge or if any declared critical endpoint becomes unreachable.
+This is not a compromise assembled from leftover routers. Each device was bought for a particular price/performance role: an open Wi-Fi 6 router at the centre, an inexpensive Wi-Fi 6 node for coverage, and an affordable Wi-Fi 7 node for 6 GHz and 320 MHz. The result keeps one expandable LAN, nearly fills the tested Gigabit path and automatically reconstructs the two-node topology after service restarts.
 
-### Backup archive ownership
+It also keeps control of the network where I want it. OpenWrt can grow with dual-provider failover, policy routing, VPN exits, monitoring and ordinary wired services without forcing every future feature into one vendor's controller.
 
-**Failure:** configuration content was correct, but one file or symbolic link
-was archived with a non-root group owner. A strict restore verifier rejected
-the backup.
+I publish deeper engineering notes for developers, architects and team leads in [Java && Management](https://t.me/management_Java). My technical-audit work and other projects are collected at [krot.name](https://krot.name/), while source code and reproducible artifacts live on [GitHub](https://github.com/krotname).
 
-**Correction:** preserve content, make a scoped metadata backup, correct only
-the owner, and rerun archive and isolated-restore verification.
+## Author links
 
-**Regression:** inspect actual archive members, including symbolic links; do not
-assume a configuration-file listing covers every archived path.
+- Telegram: [Java && Management](https://t.me/management_Java)
+- Website: [krot.name](https://krot.name/)
+- GitHub profile: [github.com/krotname](https://github.com/krotname)
+- This project: [krotname/openwrt-prplmesh-easymesh](https://github.com/krotname/openwrt-prplmesh-easymesh)
+- Binary release: [latest APK and checksums](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)
 
-### Ambiguous radio selection
+---
 
-**Failure:** a fallback configuration lookup could choose an arbitrary access
-point when more than one section matched broadly.
-
-**Correction:** fail closed unless exactly one access-point section matches.
-
-**Regression:** cover zero, one, and multiple candidate sections in a pure unit
-test.
-
-### Stale-process and stale-log false positives
-
-**Failure:** a controller-only health check or an old transport log could make a
-partial stack appear healthy.
-
-**Correction:** require controller, transport, and agent liveness and remove the
-old probe log before each isolated run.
-
-**Regression:** kill each component independently and require the stack probe to
-fail.
-
-### Permissive MAC parsing
-
-**Failure:** a frame generator accepted a valid-looking MAC followed by trailing
-characters.
-
-**Correction:** require the exact 17-character canonical form before emitting a
-frame.
-
-**Regression:** normalize only the non-deterministic Message ID, compare every
-other byte with a golden frame, and reject short, long, malformed, or
-trailing-garbage input.
-
-### Management-session leakage
-
-**Failure:** a diagnostic command could expose a login token or leave a vendor
-management session open.
-
-**Correction:** print only non-secret status, restrict read commands to an
-allowlist, scope relaxed certificate handling to the device client when
-required, and perform best-effort logout in a `finally` path.
-
-**Regression:** capture stdout, reject secret-like response fields, attempt a
-forbidden mutation operation, and assert logout after success and failure.
-
-## Automated test layers
-
-![Evidence stack from configuration to real connectivity](assets/evidence-stack.png)
-
-The work used complementary layers rather than treating one emulator as proof
-of radio behavior:
-
-- fixture tests for topology parsing, localized band labels, DHCP address
-  drift, exact SSID matching, and backup-manifest validation;
-- live, read-only acceptance checks for bridge membership, reachability,
-  processes, sockets, radio read-back, and controller adjacency;
-- Python unit tests for the constrained vendor-management reader;
-- native C/C++ tests for frame generation and deterministic configuration
-  selection;
-- OpenWrt-target cross-compilation syntax checks for changed production code;
-- isolated filesystem restore checks for configuration backups.
-
-The earlier combined non-mutating fixture and live suite passed 33 of 33 checks
-with no skips. The constrained vendor reader passed 8 of 8 unit tests, and the
-native prplMesh set passed 9 of 9 test binaries after the modified unit was
-rebuilt from the current source.
-
-The final deployed artifact is r8. Its hostapd control-socket source
-compatibility suite passed 9 of 9 cases and its APK artifact suite passed 11 of
-11. The package passed offline integrity and extraction checks, contained 32
-payload files, and did not replace the system `wpad`, `hostapd`, or
-`wpa_supplicant` binaries. At the earlier hardware-reboot checkpoint, the
-reboot changed the boot identity.
-Normal and recovery SSH listeners on TCP 22 and 2222 returned in about 19
-seconds, both proprietary agents returned as active Ethernet neighbors in about
-35 seconds, `lan2` and `lan3` remained in the main LAN bridge at 1000/full, and
-the complete post-reboot live acceptance suite passed 19 of 19 checks.
-
-At the later final controller-restart checkpoint, one occupied controller-side
-LAN uplink remained in the main bridge at 1000/full, another bridge member was
-idle with no carrier, both agents returned as active Ethernet neighbors, and
-LiveSafe r8 passed 19 of 19 checks with no skips. This is current topology
-evidence, not a second hardware-reboot test and not a throughput result for the
-agent-to-agent segment.
-
-### Source regression found by the reproducible build
-
-The reproducible r6 build exposed a runtime defect rather than completing the
-deployment. The package built its wireless control library against pristine
-upstream hostapd sources but omitted OpenWrt's control-client socket permission
-patch. The sandboxed hostapd process received `STATUS` requests but could not
-reply to the client-created socket; both fronthaul processes then timed out and
-restarted, leaving the controller topology empty.
-
-r8 fixes the cause in source. The recipe pins the upstream hostapd input,
-verifies it before patching, applies the official OpenWrt
-`610-hostapd_cli_ujail_permission.patch`, and verifies the patched result. The
-patch adjusts the local UNIX control socket mode and ownership so the sandboxed
-daemon can reply. The recipe also uses the SDK's explicit host `mkhash` tool
-instead of relying on an undefined build macro. See the
-[sanitized r8 engineering note](docs/r8-hostapd-control-socket-fix.md).
-
-## Claims this evidence does not support
-
-Do not infer any of the following from the recorded result:
-
-- Wi-Fi Alliance EasyMesh certification;
-- complete vendor interoperability;
-- 802.11r fast transition: it was disabled on the OpenWrt access point, and a
-  compatible cross-vendor mobility domain and FT security profile were not
-  demonstrated;
-- mesh-wide MLO: the OpenWrt access point and Wi-Fi 6 agent do not provide
-  EHT/MLO, so the unchanged three-device topology cannot offer it;
-- zero-packet-loss or imperceptible client roaming;
-- controller ownership of every vendor-specific 6 GHz setting;
-- native prplMesh enforcement of the vendor-managed 6 GHz profile: the agent
-  does not expose a controller-visible 6 GHz radio identifier, so the verified
-  guard is a separate compensating control rather than a core mesh feature;
-- gigabit negotiation or throughput on every Ethernet segment: 1000/full is
-  current evidence only for the occupied controller-side uplink, and the
-  second cascaded path was not throughput-tested;
-- successful disaster recovery onto physical hardware;
-- resilience to every reboot, cable, power, or firmware-upgrade sequence; one
-  r8 hardware reboot passed, which is evidence only for that tested sequence.
-
-The physical walking test was skipped and not run. A future test with
-packet-loss, association, BSSID, and latency telemetry is required before
-making a practical seamless-roaming claim. The second wired path was also not
-throughput-tested; neither result can be inferred from the first-path
-measurement.
-
-## Reproducibility and source provenance
-
-The final r8 package was built offline from a pinned OpenWrt SDK, immutable
-upstream inputs, and a reviewable source patch. The resulting APK is 4,537,338
-bytes, and its complete artifact identity was verified before installation.
-Artifact identity supports provenance but does not replace source review or
-live testing.
-
-OpenWrt's APK v3 workflow signs the repository index rather than each
-individual package. The individual APK passed offline integrity and extraction
-checks, and freshly generated repository indexes passed trust verification
-with the matching public test key. The private test key is not part of this
-public repository and must not be treated as a production release key.
-
-A publishable package recipe should contain an upstream source URL, immutable
-commit or release tag, hashes where applicable, and a reviewable patch series.
-A local source-directory override is not reproducible and must not be published
-as the package recipe.
-
-prplMesh 6.0.1 carries a BSD-2-Clause-Patent project license while parts of its
-source tree use additional BSD, ISC, or MIT notices. Preserve upstream
-`LICENSE`, `LICENSES`, `AUTHORS`, copyright, and SPDX material. Review the
-package metadata so it does not incorrectly reduce a mixed-license tree to a
-single incomplete declaration.
-
-Potential upstream contributions should follow the
-[prplMesh project](https://gitlab.com/prpl-foundation/prplmesh/prplMesh)
-workflow, including its issue-tracking, Developer Certificate of Origin,
-`Signed-off-by`, authorship, and source-header requirements.
-
-## Publication safety
-
-Publish from an explicit allowlist, not by copying a working directory. Exclude
-private configuration, backups, logs, packet captures, firmware blobs,
-proprietary web resources, device-label images, credentials, tokens, real
-network identifiers, and management-session material.
-
-This article was prepared with generative-AI assistance. It is not suitable for
-verbatim submission to the OpenWrt Forum. See the
-[forum evidence note](docs/forum-evidence.md) and re-check the
-[current forum guidelines](https://forum.openwrt.org/guidelines) before writing
-an independent, personally verified post.
+Prices and availability were checked on 21 July 2026 and rounded to the nearest thousand roubles. Article structure and illustrations were prepared with generative-AI assistance from the author's logs and measurements; technical claims were checked against the recorded acceptance evidence.
