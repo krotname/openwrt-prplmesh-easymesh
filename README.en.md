@@ -1,6 +1,10 @@
 # Budget Wi-Fi 7 Mesh on OpenWrt: Xiaomi AX6S and Mercusys
 
-[English](README.en.md)
+[Русский](README.md)
+
+[![CI](https://github.com/krotname/openwrt-prplmesh-easymesh/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/krotname/openwrt-prplmesh-easymesh/actions/workflows/verify.yml?query=branch%3Amain)
+[![Shell](https://img.shields.io/badge/Shell-technology-555.svg)](https://github.com/krotname/openwrt-prplmesh-easymesh/search?l=Shell)
+[![Makefile](https://img.shields.io/badge/Makefile-technology-555.svg)](https://github.com/krotname/openwrt-prplmesh-easymesh/search?l=Makefile)
 
 **[Published Russian article on Habr](https://habr.com/ru/articles/1061592/)** · **[Install guide: English](docs/install-en.md) / [Russian](docs/install-ru.md)** · **[Latest binary release](https://github.com/krotname/openwrt-prplmesh-easymesh/releases/latest)**
 
